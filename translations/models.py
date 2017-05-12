@@ -2,27 +2,27 @@ from django.conf import settings
 from django.core.urlresolvers import clear_url_caches
 from django.db import models
 from django.db.models.signals import pre_delete, post_delete
-from django.utils.encoding import smart_str 
+from django.utils.encoding import smart_str
 from django.utils.translation import get_language, get_language_info, ugettext_lazy, ugettext as _
-from managers import TranslatableManager
-import utils
 
-import os
+from . import utils
+from .managers import TranslatableManager
 
 USE_ELFINDER = False
 try:
     from elfinder.fields import ElfinderField
+
     USE_ELFINDER = 'elfinder' in settings.INSTALLED_APPS
 except ImportError:
     USE_ELFINDER = False
 
 if USE_ELFINDER:
-    make_imagefield = lambda: ElfinderField(optionset='image', start_path='languages', verbose_name=ugettext_lazy('Image'), blank=True, null=True)
+    make_imagefield = lambda: ElfinderField(optionset='image', start_path='languages',
+                                            verbose_name=ugettext_lazy('Image'), blank=True, null=True)
 else:
-    def _upload_to(instance, filename):
-        ext = os.path.splitext(filename)[-1]
-        return os.path.join('languages', '%s%s' % (instance.name, ext))
-    make_imagefield = lambda: models.ImageField(upload_to = _upload_to, verbose_name=ugettext_lazy('Image'), blank=True, null=True)
+    make_imagefield = lambda: models.CharField(verbose_name=ugettext_lazy('Image'), max_length=100, blank=True,
+                                               null=True)
+
 
 class Language(models.Model):
     """
@@ -37,9 +37,10 @@ class Language(models.Model):
     `LANGUAGES <https://docs.djangoproject.com/en/dev/ref/settings/#languages>`_
     django setting. 
     """
-    
-    #Use name as primary key to avoid joins when retrieving Translation objects
-    name = models.CharField(choices=sorted(settings.LANGUAGES, key=lambda name: name[1]), max_length=7, verbose_name=ugettext_lazy('Name'), primary_key=True)
+
+    # Use name as primary key to avoid joins when retrieving Translation objects
+    name = models.CharField(choices=sorted(settings.LANGUAGES, key=lambda name: name[1]), max_length=7,
+                            verbose_name=ugettext_lazy('Name'), primary_key=True)
     image = make_imagefield()
     default = models.BooleanField(default=False, verbose_name=ugettext_lazy('Default'))
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('Order'))
@@ -52,9 +53,9 @@ class Language(models.Model):
             ("view_translations", "Can see translation messages for a language"),
             ("edit_translations", "Can edit the language's translation messages"),
         )
-        
+
     def _default_changed(self):
-        #change the default language for this thread
+        # change the default language for this thread
         clear_url_caches()
         utils._default = self.name
 
@@ -64,25 +65,25 @@ class Language(models.Model):
         one default language exists.
         """
         try:
-            #not using get_default_language() here, as this method might return
-            #the settings.LANGUAGE_CODE setting if no db languages exist
+            # not using get_default_language() here, as this method might return
+            # the settings.LANGUAGE_CODE setting if no db languages exist
             default = Language.objects.get(default=True)
-            #check if the default language just changed
+            # check if the default language just changed
             if self.default and self != default:
-                #make sure only one default language exists
+                # make sure only one default language exists
                 default.default = False
                 default.save()
                 self._default_changed()
 
         except Language.DoesNotExist:
-            #no default language was found
-            #force this as the default
+            # no default language was found
+            # force this as the default
             self.default = True
             self._default_changed()
 
         super(Language, self).save(*args, **kwargs)
-        #this might produce a little overhead, but it's necessary:
-        #the state of _supported could be unpredictable by now
+        # this might produce a little overhead, but it's necessary:
+        # the state of _supported could be unpredictable by now
         utils._supported = [smart_str(l) for l in Language.objects.values_list('name', flat=True)]
 
     def delete(self):
@@ -98,6 +99,7 @@ class Language(models.Model):
         """
         return get_language_info(self.name)['name']
 
+
 class Translatable(models.Model):
     """
     This model should be subclassed by models that need multilingual
@@ -109,26 +111,28 @@ class Translatable(models.Model):
     model must be implemented. 
     """
     objects = TranslatableManager()
-    
+
     class Meta:
-        abstract = True        
+        abstract = True
 
     def get_name(self, language_id=None):
         """
         Get the related :class:`translations.models.Translation`
         object's display name for a given ``language``.
         """
-        #use the current language if not explicitly set
+        # use the current language if not explicitly set
         translation = self.translation(language_id)
         if translation:
-            return unicode(translation)
+            return str(translation)
 
-        #attempt to show default translation
-        translation = self.translation(utils.get_default_language())  
+        # attempt to show default translation
+        translation = self.translation(utils.get_default_language())
         if translation:
             return u'%s (%s %s)' % (translation, _('not translated in'), language_id if language_id else get_language())
         else:
-            return u'%s #%s (%s %s)' % (self._meta.verbose_name, self.pk, _('not translated in'), language_id if language_id else get_language())
+            return u'%s #%s (%s %s)' % (
+                self._meta.verbose_name, self.pk, _('not translated in'),
+                language_id if language_id else get_language())
 
     def translation(self, language_id=None):
         """
@@ -140,11 +144,11 @@ class Translatable(models.Model):
         """
         if not language_id:
             language_id = get_language()
-        #using prefetched translations
+        # using prefetched translations
         for l in self.translations.all():
             if l.language_id == language_id:
                 return l
-        
+
     def __unicode__(self):
         """
         This default implementation returns the unicode representation of
@@ -171,27 +175,30 @@ class Translation(models.Model):
     should be named `'translations'`.
     """
     language = models.ForeignKey(Language)
-    
+
     class Meta:
         abstract = True
-        
+
+
 def pre_delete_language(sender, instance, using, **kwargs):
     """
     **Signal receiver**. Although admin actions make sure the default language will 
     not be deleted, this receiver is still here to prevent 3rd party code from 
     accidentally deleting the default language
-    """  
+    """
     if instance.default:
         raise Exception(_("Cannot delete the default language"))
+
 
 def post_delete_language(sender, instance, using, **kwargs):
     """
     **Signal receiver**. Update the supported languages to ensure that 
     a 404 will be raised when requesting the language's urls
     """
-    #generate supported languages in case they are not initialized
+    # generate supported languages in case they are not initialized
     utils.get_supported_languages()
     utils._supported.remove(instance.name)
-    
+
+
 pre_delete.connect(pre_delete_language, sender=Language, dispatch_uid='language-pre-delete')
 post_delete.connect(post_delete_language, sender=Language, dispatch_uid='language-post-delete')

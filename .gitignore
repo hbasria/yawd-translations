@@ -4,3 +4,6 @@
 /.settings
 /yawd_translations.egg-info
 /dist
+.idea
+/env
+/db.sqlite3
