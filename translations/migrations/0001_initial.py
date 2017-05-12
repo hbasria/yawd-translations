@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
-
     def forwards(self, orm):
         # Adding model 'Language'
         db.create_table(u'translations_language', (
@@ -16,11 +13,9 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'translations', ['Language'])
 
-
     def backwards(self, orm):
         # Deleting model 'Language'
         db.delete_table(u'translations_language')
-
 
     models = {
         u'translations.language': {

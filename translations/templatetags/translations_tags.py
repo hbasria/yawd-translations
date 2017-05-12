@@ -1,7 +1,7 @@
 from django import template
 from django.utils.translation import get_language, activate
-from translations.models import Translatable, Language
 
+from translations.models import Translatable, Language
 
 register = template.Library()
 
@@ -18,11 +18,11 @@ def translation_urls(context, object_=None):
     prepend the appropriate language prefix.
     """
     current_language = get_language()
-    #use the translations.context_processors.languages context processor if
-    #available, to avoid extra queries
+    # use the translations.context_processors.languages context processor if
+    # available, to avoid extra queries
     langs = context['langs'] if 'langs' in context else Language.objects.all()
-    urls = [] 
-    
+    urls = []
+
     for lang in langs:
         activate(lang.pk)
         url = ''
@@ -35,13 +35,13 @@ def translation_urls(context, object_=None):
                 url = translation.get_absolute_url()
         elif isinstance(object_, str) or isinstance(object_, unicode):
             url = '/%s%s' % (lang.pk, object_) if not lang.default else object_
- 
-        #in case there is no url for this language redirect to the
-        #language's index page
-        if not url: 
+
+        # in case there is no url for this language redirect to the
+        # language's index page
+        if not url:
             url = '/%s/' % lang.pk if not lang.default else '/'
 
-        urls.append({'language': lang, 'url': url })
+        urls.append({'language': lang, 'url': url})
 
     activate(current_language)
-    return { 'urls' : urls }
+    return {'urls': urls}

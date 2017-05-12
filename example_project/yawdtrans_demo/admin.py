@@ -1,11 +1,15 @@
 from django.contrib import admin
-from translations.admin import TranslationInline
 from models import MultilingualPage, MultilingualPageTranslation
 
+from translations.admin import TranslationInline
+
+
 class MultilingualPageTranslationAdmin(TranslationInline):
-    model =  MultilingualPageTranslation
+    model = MultilingualPageTranslation
+
 
 class MultilingualPageAdmin(admin.ModelAdmin):
     inlines = [MultilingualPageTranslationAdmin]
+
 
 admin.site.register(MultilingualPage, MultilingualPageAdmin)

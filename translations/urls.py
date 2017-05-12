@@ -1,9 +1,11 @@
 import re
-from django.conf.urls import patterns
+
 from django.conf import settings
+from django.conf.urls import patterns
 from django.core.urlresolvers import LocaleRegexURLResolver
-from utils import get_default_language
 from django.utils.translation import get_language
+from utils import get_default_language
+
 
 def translation_patterns(prefix, *args):
     """
@@ -16,7 +18,8 @@ def translation_patterns(prefix, *args):
     if not settings.USE_I18N:
         return pattern_list
     return [TranslationRegexURLResolver(pattern_list)]
-           
+
+
 class TranslationRegexURLResolver(LocaleRegexURLResolver):
     """
     A URL resolver that always matches the active language code as URL prefix.
