@@ -1,11 +1,12 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.forms import HiddenInput
 from django.forms.models import modelformset_factory
 from django.utils.translation import ungettext, ugettext_lazy
-from forms import BaseTranslationFormSet
-from models import Language, Translation
-from views import TranslationMessagesView, GenerateTranslationMessagesView, TranslationMessagesEditView
+
+from .forms import BaseTranslationFormSet
+from .models import Language, Translation
+from .views import TranslationMessagesView, GenerateTranslationMessagesView, TranslationMessagesEditView
 
 
 class TranslationInline(admin.StackedInline):
@@ -49,16 +50,16 @@ class LanguageAdmin(admin.ModelAdmin):
         for the specified language
         """
         urls = super(LanguageAdmin, self).get_urls()
-        my_urls = patterns('',
-                           url(r'^(.+)/messages/$', self.admin_site.admin_view(TranslationMessagesView.as_view()),
-                               name="translations-messages-view"),
-                           url(r'^(.+)/messages/generate/$',
-                               self.admin_site.admin_view(GenerateTranslationMessagesView.as_view()),
-                               name="generate-translations-messages-view"),
-                           url(r'^(.+)/messages/(.+)/$',
-                               self.admin_site.admin_view(TranslationMessagesEditView.as_view()),
-                               name="edit-translations-messages-view"),
-                           )
+        my_urls = [
+            url(r'^(.+)/messages/$', self.admin_site.admin_view(TranslationMessagesView.as_view()),
+                name="translations-messages-view"),
+            url(r'^(.+)/messages/generate/$',
+                self.admin_site.admin_view(GenerateTranslationMessagesView.as_view()),
+                name="generate-translations-messages-view"),
+            url(r'^(.+)/messages/(.+)/$',
+                self.admin_site.admin_view(TranslationMessagesEditView.as_view()),
+                name="edit-translations-messages-view"),
+        ]
         return my_urls + urls
 
     def has_delete_permission(self, request, obj=None):

@@ -1,13 +1,14 @@
 import os
 
-import utils
 from django.conf import settings
 from django.core.urlresolvers import clear_url_caches
 from django.db import models
 from django.db.models.signals import pre_delete, post_delete
 from django.utils.encoding import smart_str
 from django.utils.translation import get_language, get_language_info, ugettext_lazy, ugettext as _
-from managers import TranslatableManager
+
+from . import utils
+from .managers import TranslatableManager
 
 USE_ELFINDER = False
 try:
@@ -26,8 +27,8 @@ else:
         return os.path.join('languages', '%s%s' % (instance.name, ext))
 
 
-    make_imagefield = lambda: models.ImageField(upload_to=_upload_to, verbose_name=ugettext_lazy('Image'), blank=True,
-                                                null=True)
+    make_imagefield = lambda: models.CharField(verbose_name=ugettext_lazy('Image'), blank=True, null=True,
+                                               max_length=100)
 
 
 class Language(models.Model):
@@ -129,7 +130,7 @@ class Translatable(models.Model):
         # use the current language if not explicitly set
         translation = self.translation(language_id)
         if translation:
-            return unicode(translation)
+            return str(translation)
 
         # attempt to show default translation
         translation = self.translation(utils.get_default_language())
@@ -137,7 +138,8 @@ class Translatable(models.Model):
             return u'%s (%s %s)' % (translation, _('not translated in'), language_id if language_id else get_language())
         else:
             return u'%s #%s (%s %s)' % (
-            self._meta.verbose_name, self.pk, _('not translated in'), language_id if language_id else get_language())
+                self._meta.verbose_name, self.pk, _('not translated in'),
+                language_id if language_id else get_language())
 
     def translation(self, language_id=None):
         """

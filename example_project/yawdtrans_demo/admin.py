@@ -1,7 +1,7 @@
 from django.contrib import admin
-from models import MultilingualPage, MultilingualPageTranslation
 
 from translations.admin import TranslationInline
+from .models import MultilingualPage, MultilingualPageTranslation
 
 
 class MultilingualPageTranslationAdmin(TranslationInline):

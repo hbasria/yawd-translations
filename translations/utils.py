@@ -22,7 +22,7 @@ def get_default_language():
 
     if _default is None:
         try:
-            from models import Language
+            from .models import Language
             _default = smart_str(Language.objects.get(default=True).name)
         except:
             _default = settings.LANGUAGE_CODE
@@ -37,7 +37,7 @@ def get_supported_languages():
     global _supported
 
     if not _supported:
-        from models import Language
+        from .models import Language
         _supported = [smart_str(l) for l in Language.objects.values_list('name', flat=True)]
 
         # if no languages are set use the default language
@@ -107,7 +107,7 @@ def compile_message_file(fn):
     else:
         cmd = 'msgfmt --check-format -o "$djangocompilemo" "$djangocompilepo"'
     os.system(cmd)
-    os.chmod(pf + '.mo', 0664)
+    os.chmod(pf + '.mo', 0o664)
 
 
 def concat_message_files(files, fn):
@@ -126,7 +126,7 @@ def concat_message_files(files, fn):
     else:
         cmd = 'msgcat --use-first -o "$djangotargetpo" $djangosourcepo'
     os.system(cmd)
-    os.chmod(fn, 0664)
+    os.chmod(fn, 0o664)
 
 
 def reset_translations(lang):

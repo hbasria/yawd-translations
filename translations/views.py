@@ -1,5 +1,6 @@
 import os
 import shutil
+from importlib import import_module
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,12 +10,11 @@ from django.core.management.commands.compilemessages import has_bom
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.utils.encoding import smart_str
-from django.utils.importlib import import_module
 from django.utils.translation import to_locale, ugettext as _
 from django.views.generic import TemplateView, FormView
-from forms import PoFileForm
-from models import Language
-from utils import compile_message_file, concat_message_files, reset_translations
+from .forms import PoFileForm
+from .models import Language
+from .utils import compile_message_file, concat_message_files, reset_translations
 
 
 class GenerateTranslationMessagesView(TemplateView):
@@ -135,7 +135,7 @@ class GenerateTranslationMessagesView(TemplateView):
                             not (app_name.startswith('django.contrib') \
                                          and os.path.exists(copy_path)):
                         shutil.copy(original_file_path, copy_path)
-                        os.chmod(copy_path, 0664)
+                        os.chmod(copy_path, 0o664)
 
                     # unlink updated file
                     if not app_name.startswith('django.contrib'):

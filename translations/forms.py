@@ -1,7 +1,9 @@
 from django import forms
 from django.forms.models import BaseInlineFormSet
-from models import Language
-from utils import get_supported_languages
+
+from .models import Language
+from .utils import get_supported_languages
+
 
 
 class BaseTranslationFormSet(BaseInlineFormSet):

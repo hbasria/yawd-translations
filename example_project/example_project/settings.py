@@ -126,7 +126,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'yawdtrans_demo',
     'translations',
-    'elfinder'
+    #    'elfinder'
 )
 
 # A sample logging configuration. The only tangible logging
